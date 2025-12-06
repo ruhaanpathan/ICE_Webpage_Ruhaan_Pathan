@@ -479,21 +479,21 @@
  <script>
   // ---- Video logic ----
   const videoLinks = {
-    1: "https://drive.google.com/file/d/1nQI2d7o3930Ht8idf6WXkOulCHhWiqz5/view",
-    2: "https://drive.google.com/file/d/1nQI2d7o3930Ht8idf6WXkOulCHhWiqz5/view",
-    3: "https://drive.google.com/file/d/1nQI2d7o3930Ht8idf6WXkOulCHhWiqz5/view",
-    4: "https://drive.google.com/file/d/1nQI2d7o3930Ht8idf6WXkOulCHhWiqz5/view",
-    5: "https://drive.google.com/file/d/1nQI2d7o3930Ht8idf6WXkOulCHhWiqz5/view",
-    6: "https://drive.google.com/file/d/1nQI2d7o3930Ht8idf6WXkOulCHhWiqz5/view"
+    1: "https://drive.google.com/file/d/1rCc8eXY3gcE7sYsAhQv1C8FSYU3Wg6wh/view?usp=sharing",
+    2: "https://drive.google.com/file/d/1bFf6ICGI6Mv5p2yU7CXto3RHFYvH_LGE/view?usp=drive_link",
+    3: "https://drive.google.com/file/d/1oyWDQJUpqWByrJtJ0CST93G8N_Ek_2Oq/view?usp=sharing",
+    4: "https://drive.google.com/file/d/1rCc8eXY3gcE7sYsAhQv1C8FSYU3Wg6wh/view?usp=sharing",
+    5: "https://drive.google.com/file/d/1bFf6ICGI6Mv5p2yU7CXto3RHFYvH_LGE/view?usp=drive_link",
+    6: "https://drive.google.com/file/d/1oyWDQJUpqWByrJtJ0CST93G8N_Ek_2Oq/view?usp=sharing"
   };
 
   const videoTopics = {
     1: "Introduction to Communication Channels",
-    2: "Types of Transmission Media",
-    3: "Microwave & Line-of-Sight Communication",
-    4: "Optical Fiber Communication",
-    5: "Twisted Pair vs Coaxial Cable",
-    6: "Cellular Networks & PCS"
+    2: "LAN, MAN & WAN",
+    3: "Performence Parameter - Bandwidth",
+    4: "Introduction to Communication Channels",
+    5: "LAN, MAN & WAN",
+    6: "Performence Parameter - Bandwidth"
   };
 
   const input = document.getElementById("videoNumber");
@@ -602,16 +602,24 @@
     scene.add(dirLight);
 
     // planet
-    const planetGeo = new THREE.SphereGeometry(1.4, 48, 48);
-    const planetMat = new THREE.MeshStandardMaterial({
-      color: 0x1d4ed8,
-      metalness: 0.4,
-      roughness: 0.35,
-      emissive: 0x0f172a,
-      emissiveIntensity: 0.8
-    });
-    const planet = new THREE.Mesh(planetGeo, planetMat);
-    scene.add(planet);
+    // realistic Earth
+const planetGeo = new THREE.SphereGeometry(1.4, 72, 72);
+
+// high-res Earth texture from threejs.org
+const earthTextureUrl = "https://threejs.org/examples/textures/land_ocean_ice_cloud_2048.jpg";
+
+const textureLoader = new THREE.TextureLoader();
+const earthTexture = textureLoader.load(earthTextureUrl);
+
+const planetMat = new THREE.MeshStandardMaterial({
+  map: earthTexture,
+  metalness: 0.0,
+  roughness: 1.0
+});
+
+const planet = new THREE.Mesh(planetGeo, planetMat);
+scene.add(planet);
+
 
     const glowGeo = new THREE.SphereGeometry(1.55, 32, 32);
     const glowMat = new THREE.MeshBasicMaterial({
