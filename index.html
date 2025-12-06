@@ -689,36 +689,20 @@ scene.add(planet);
 let lastX = 0;
 let lastY = 0;
 
-// no clamping → full 360° rotation
-function onPointerDown(event) {
-  isDragging = true;
-  lastX = event.clientX;
-  lastY = event.clientY;
-}
+const rotateSpeed = 0.004;
 
-function onPointerMove(event) {
-  if (!isDragging) return;
-
-  const dx = event.clientX - lastX;
-  const dy = event.clientY - lastY;
-
-  lastX = event.clientX;
-  lastY = event.clientY;
-
-  // sensitivity
-  const rotateSpeed = 0.004;
-
+function applyDrag(dx, dy) {
   // horizontal drag → full 360 orbit
   azimuth -= dx * rotateSpeed;
 
-  // vertical drag → rotate camera vertically around target
+  // vertical drag → tilt up/down
   elevation -= dy * rotateSpeed;
 
-  // wrap azimuth so it never overflows
+  // wrap azimuth so it doesn’t explode
   if (azimuth > Math.PI) azimuth -= Math.PI * 2;
   if (azimuth < -Math.PI) azimuth += Math.PI * 2;
 
-  // small clamp to avoid flipping camera upside down
+  // clamp elevation to avoid flipping over the poles
   const limit = Math.PI / 2 - 0.05;
   if (elevation > limit) elevation = limit;
   if (elevation < -limit) elevation = -limit;
@@ -726,19 +710,55 @@ function onPointerMove(event) {
   updateCameraPosition();
 }
 
-function onPointerUp() {
+function startDrag(clientX, clientY) {
+  isDragging = true;
+  lastX = clientX;
+  lastY = clientY;
+}
+
+function moveDrag(clientX, clientY) {
+  if (!isDragging) return;
+  const dx = clientX - lastX;
+  const dy = clientY - lastY;
+  lastX = clientX;
+  lastY = clientY;
+  applyDrag(dx, dy);
+}
+
+function endDrag() {
   isDragging = false;
 }
 
+/* ---- Mouse events ---- */
+renderer.domElement.addEventListener("mousedown", (e) => {
+  startDrag(e.clientX, e.clientY);
+});
 
-    function onPointerUp() {
-      isDragging = false;
-    }
+window.addEventListener("mousemove", (e) => {
+  moveDrag(e.clientX, e.clientY);
+});
 
-    renderer.domElement.addEventListener("mousedown", onPointerDown);
-    window.addEventListener("mousemove", onPointerMove);
-    window.addEventListener("mouseup", onPointerUp);
-    renderer.domElement.addEventListener("mouseleave", onPointerUp);
+window.addEventListener("mouseup", endDrag);
+renderer.domElement.addEventListener("mouseleave", endDrag);
+
+/* ---- Touch events (for phone) ---- */
+renderer.domElement.addEventListener("touchstart", (e) => {
+  if (e.touches.length === 0) return;
+  const t = e.touches[0];
+  startDrag(t.clientX, t.clientY);
+  e.preventDefault(); // stop page scroll while dragging
+}, { passive: false });
+
+window.addEventListener("touchmove", (e) => {
+  if (!isDragging || e.touches.length === 0) return;
+  const t = e.touches[0];
+  moveDrag(t.clientX, t.clientY);
+  e.preventDefault();
+}, { passive: false });
+
+window.addEventListener("touchend", endDrag);
+window.addEventListener("touchcancel", endDrag);
+
 
     // animation loop
     let t = 0;
