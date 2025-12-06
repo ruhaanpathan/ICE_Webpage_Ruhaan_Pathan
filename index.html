@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Communication Engineering Video Portal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Poppins like rtCamp -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Three.js for 3D satellites -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+
+
+
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at top, #1f2933, #020617);
+      color: #f8fafc;
+      padding: 16px;
+    }
+
+    .container {
+      background: rgba(15, 23, 42, 0.96);
+      border-radius: 24px;
+      padding: 20px 22px 24px;
+      max-width: 1100px;
+      width: 100%;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+      border: 1px solid rgba(148, 163, 184, 0.35);
+    }
+
+    /* ---- 2-column layout ---- */
+    .main-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.3fr);
+      gap: 22px;
+      align-items: stretch;
+    }
+
+    @media (max-width: 900px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .left-panel {
+      display: flex;
+      flex-direction: column;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      margin-bottom: 0.4rem;
+      text-align: left;
+    }
+
+    .subtitle {
+      font-size: 0.9rem;
+      color: #cbd5f5;
+      margin-bottom: 1.1rem;
+    }
+
+    .highlight {
+      color: #38bdf8;
+      font-weight: 600;
+    }
+
+    .input-area {
+      display: flex;
+      gap: 0.6rem;
+      align-items: center;
+      margin-bottom: 0.7rem;
+      flex-wrap: wrap;
+    }
+
+    label {
+      font-size: 0.9rem;
+    }
+
+    input[type="number"] {
+      width: 80px;
+      padding: 0.4rem 0.5rem;
+      border-radius: 999px;
+      border: 1px solid #334155;
+      background: #020617;
+      color: #e5e7eb;
+      text-align: center;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border 0.2s, box-shadow 0.2s, transform 0.1s;
+    }
+
+    input[type="number"]:focus {
+      border-color: #38bdf8;
+      box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.6);
+      transform: translateY(-1px);
+    }
+
+    /* base button style (no glow) */
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 0.45rem 1.2rem;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      background: #1e40af;
+      color: white;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    /* Connect button – flat teal */
+    #goBtn {
+      background: #0f766e;
+    }
+    #goBtn:hover { background: #0d9488; }
+    #goBtn:active { background: #0f766e; }
+
+    /* Random button – flat slate */
+    #randomBtn {
+      background: #475569;
+    }
+    #randomBtn:hover { background: #64748b; }
+    #randomBtn:active { background: #475569; }
+
+    #message {
+      min-height: 1.2rem;
+      font-size: 0.9rem;
+      margin-bottom: 0.6rem;
+    }
+
+    #message.ok {
+      color: #4ade80;
+    }
+
+    #message.error {
+      color: #f97373;
+    }
+
+    .animation-area {
+      margin-top: 4px;
+      padding: 1rem 0.7rem 0.5rem;
+      border-radius: 16px;
+      background: radial-gradient(circle at center, rgba(51, 65, 85, 0.9), rgba(15, 23, 42, 0.97));
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .animation-title {
+      text-align: center;
+      font-size: 0.9rem;
+      margin-bottom: 0.7rem;
+      color: #e5e7eb;
+    }
+
+    .network {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      position: relative;
+    }
+
+    .node {
+      width: 110px;
+      padding: 0.6rem 0.5rem;
+      border-radius: 14px;
+      text-align: center;
+      font-size: 0.8rem;
+      background: linear-gradient(145deg, #020617, #020617);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      box-shadow: 0 10px 22px rgba(15, 23, 42, 0.9);
+      position: relative;
+    }
+
+    .node-title {
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: #e5e7eb;
+    }
+
+    .node-sub {
+      font-size: 0.7rem;
+      color: #9ca3af;
+    }
+
+    .channel {
+      flex: 1;
+      position: relative;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .wire {
+      position: absolute;
+      top: 50%;
+      left: 10%;
+      right: 10%;
+      height: 3px;
+      background: linear-gradient(90deg, #38bdf8, #22c55e, #eab308, #f97316);
+      opacity: 0.6;
+      transform: translateY(-50%);
+      border-radius: 999px;
+    }
+
+    .wave {
+      position: absolute;
+      top: 50%;
+      left: 10%;
+      right: 10%;
+      height: 26px;
+      transform: translateY(-50%);
+      background-image: radial-gradient(circle at 0 50%, rgba(56, 189, 248, 0.4) 0, transparent 55%);
+      background-repeat: repeat-x;
+      background-size: 40px 26px;
+      opacity: 0.45;
+      animation: waveMove 1.6s linear infinite;
+    }
+
+    @keyframes waveMove {
+      from { background-position-x: 0; }
+      to   { background-position-x: 40px; }
+    }
+
+    .signal-dot {
+      position: absolute;
+      top: 50%;
+      left: 10%;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #facc15, #f97316);
+      box-shadow: 0 0 16px rgba(250, 204, 21, 0.95);
+      transform: translate(-50%, -50%);
+      opacity: 0;
+    }
+
+    .signal-dot.animate {
+      opacity: 1;
+      animation: moveSignal 1.5s ease-out forwards;
+    }
+
+    @keyframes moveSignal {
+      0% {
+        left: 10%;
+        transform: translate(-50%, -50%) scale(0.95);
+      }
+      50% {
+        transform: translate(-50%, -50%) scale(1.1);
+      }
+      100% {
+        left: 90%;
+        transform: translate(-50%, -50%) scale(1.0);
+      }
+    }
+
+    .bit-stream {
+      position: absolute;
+      top: calc(50% - 22px);
+      left: 10%;
+      font-size: 0.7rem;
+      letter-spacing: 2px;
+      color: #38bdf8;
+      opacity: 0;
+      white-space: nowrap;
+      text-shadow: 0 0 6px rgba(56, 189, 248, 0.9);
+    }
+
+    .bit-stream.animate {
+      opacity: 0.85;
+      animation: bitsMove 1.5s ease-out forwards;
+    }
+
+    @keyframes bitsMove {
+      0%   { transform: translateX(0); }
+      100% { transform: translateX(80%); }
+    }
+
+    .video-tag {
+      margin-top: 0.7rem;
+      text-align: center;
+      font-size: 0.8rem;
+      color: #cbd5f5;
+    }
+
+    .video-tag span {
+      color: #facc15;
+      font-weight: 600;
+    }
+
+    .random-area {
+      margin-top: 0.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.25rem;
+    }
+
+    .random-hint {
+      font-size: 0.8rem;
+      color: #94a3b8;
+    }
+
+    /* ---------- Right side preview card ---------- */
+
+    .preview-panel {
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+    }
+
+    .preview-card {
+      width: 100%;
+      border-radius: 20px;
+      padding: 14px 16px 16px;
+      background: radial-gradient(circle at top left, #0b2a3f, #050816 55%, #111827 100%);
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.9);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .preview-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: #cbd5f5;
+      margin-bottom: 4px;
+    }
+
+    .preview-dots {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .preview-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+    }
+    .preview-dot.red    { background: #f97373; }
+    .preview-dot.yellow { background: #facc15; }
+    .preview-dot.green  { background: #4ade80; }
+
+    .preview-title {
+      opacity: 0.85;
+    }
+
+    .preview-chip {
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.65);
+      font-size: 0.7rem;
+      color: #e5e7eb;
+      background: rgba(15, 23, 42, 0.8);
+    }
+
+    .preview-viewport {
+      flex: 1;
+      border-radius: 14px;
+      background: radial-gradient(circle at left, #0b3b5b, #111827 55%, #1c1342);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .preview-status {
+      align-self: flex-end;
+      margin-top: 6px;
+      font-size: 0.72rem;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      color: #e5e7eb;
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        padding: 16px 14px 20px;
+      }
+      h1 {
+        font-size: 1.35rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="main-grid">
+      <!-- LEFT SIDE -->
+      <div class="left-panel">
+        <h1>Communication Engineering Video Portal</h1>
+        <p class="subtitle">
+          Enter a number from <span class="highlight">1 to 6</span> and watch the signal travel
+          from <span class="highlight">Transmitter</span> to your <span class="highlight">Video</span>.
+        </p>
+
+        <div class="input-area">
+          <label for="videoNumber">Enter video number:</label>
+          <input id="videoNumber" type="number" min="1" max="6" placeholder="1 - 6">
+          <button id="goBtn">Connect 🚀</button>
+        </div>
+
+        <div class="random-area">
+          <button id="randomBtn">Random Video 🎲</button>
+          <p class="random-hint">Let the system pick a video for you.</p>
+        </div>
+
+        <div id="message"></div>
+
+        <div class="animation-area">
+          <div class="animation-title">Communication Channel Animation</div>
+          <div class="network">
+            <div class="node">
+              <div class="node-title">Transmitter</div>
+              <div class="node-sub">Your Brain</div>
+            </div>
+
+            <div class="channel">
+              <div class="wire"></div>
+              <div class="wave"></div>
+              <div class="signal-dot" id="signalDot"></div>
+              <div class="bit-stream" id="bitStream">1011010010110101</div>
+            </div>
+
+            <div class="node">
+              <div class="node-title">Receiver</div>
+              <div class="node-sub">Video Player</div>
+            </div>
+          </div>
+          <div class="video-tag" id="videoTag">
+            Waiting for input…
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT SIDE: 3D RF PREVIEW -->
+      <div class="preview-panel">
+        <div class="preview-card">
+          <div class="preview-header">
+            <div class="preview-dots">
+              <span class="preview-dot red"></span>
+              <span class="preview-dot yellow"></span>
+              <span class="preview-dot green"></span>
+            </div>
+            <div class="preview-title">live-rf-preview.glb</div>
+            <div class="preview-chip">Real-time rendering</div>
+          </div>
+
+          <div class="preview-viewport" id="satellitePreview"></div>
+
+          <div class="preview-status">Simulating RF propagation…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+ <script>
+  // ---- Video logic ----
+  const videoLinks = {
+    1: "https://drive.google.com/file/d/1nQI2d7o3930Ht8idf6WXkOulCHhWiqz5/view",
+    2: "https://drive.google.com/file/d/1nQI2d7o3930Ht8idf6WXkOulCHhWiqz5/view",
+    3: "https://drive.google.com/file/d/1nQI2d7o3930Ht8idf6WXkOulCHhWiqz5/view",
+    4: "https://drive.google.com/file/d/1nQI2d7o3930Ht8idf6WXkOulCHhWiqz5/view",
+    5: "https://drive.google.com/file/d/1nQI2d7o3930Ht8idf6WXkOulCHhWiqz5/view",
+    6: "https://drive.google.com/file/d/1nQI2d7o3930Ht8idf6WXkOulCHhWiqz5/view"
+  };
+
+  const videoTopics = {
+    1: "Introduction to Communication Channels",
+    2: "Types of Transmission Media",
+    3: "Microwave & Line-of-Sight Communication",
+    4: "Optical Fiber Communication",
+    5: "Twisted Pair vs Coaxial Cable",
+    6: "Cellular Networks & PCS"
+  };
+
+  const input = document.getElementById("videoNumber");
+  const goBtn = document.getElementById("goBtn");
+  const randomBtn = document.getElementById("randomBtn");
+  const message = document.getElementById("message");
+  const signalDot = document.getElementById("signalDot");
+  const bitStream = document.getElementById("bitStream");
+  const videoTag = document.getElementById("videoTag");
+
+  function startConnection() {
+    const num = parseInt(input.value.trim(), 10);
+    message.className = "";
+
+    if (Number.isNaN(num)) {
+      message.textContent = "Please enter a number between 1 and 6.";
+      message.classList.add("error");
+      videoTag.textContent = "No video selected.";
+      return;
+    }
+
+    if (num < 1 || num > 6) {
+      message.textContent = "Invalid choice. Only videos 1 to 6 are available.";
+      message.classList.add("error");
+      videoTag.textContent = "No video selected.";
+      return;
+    }
+
+    const link = videoLinks[num];
+
+    if (!link || link.startsWith("https://example.com")) {
+      message.textContent = "This video link is not set yet. Update the code with your real URL.";
+      message.classList.add("error");
+      videoTag.textContent = "Configure the link for video " + num + " in the code.";
+      return;
+    }
+
+    message.textContent = "Connecting to Video " + num + "… watch the signal!";
+    message.classList.add("ok");
+    videoTag.innerHTML = `
+      Selected: <span>Video ${num}</span><br>
+      Topic: <span>${videoTopics[num] || "Topic not set"}</span><br>
+      (opening in a new tab)
+    `;
+
+    // restart animations
+    signalDot.classList.remove("animate");
+    bitStream.classList.remove("animate");
+    void signalDot.offsetWidth;
+    signalDot.classList.add("animate");
+    bitStream.classList.add("animate");
+
+    setTimeout(() => {
+      window.open(link, "_blank");
+    }, 1500);
+  }
+
+  goBtn.addEventListener("click", startConnection);
+
+  input.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      startConnection();
+    }
+  });
+
+  randomBtn.addEventListener("click", () => {
+    const randomNum = Math.floor(Math.random() * 6) + 1;
+    input.value = randomNum;
+    startConnection();
+  });
+
+  // ---- 3D Satellite preview WITHOUT OrbitControls (custom drag) ----
+  (function initSatelliteScene() {
+    const container = document.getElementById("satellitePreview");
+    const width = container.clientWidth;
+    const height = container.clientHeight || 240;
+
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x020617, 0.015);
+
+    const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 1000);
+    const radius = 7;
+    let azimuth = 0.6;   // horizontal angle
+    let elevation = 0.4; // vertical angle
+
+    function updateCameraPosition() {
+      const x = radius * Math.cos(azimuth) * Math.cos(elevation);
+      const y = radius * Math.sin(elevation);
+      const z = radius * Math.sin(azimuth) * Math.cos(elevation);
+      camera.position.set(x, y, z);
+      camera.lookAt(0, 0, 0);
+    }
+    updateCameraPosition();
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(width, height);
+    renderer.setPixelRatio(window.devicePixelRatio || 1);
+    container.appendChild(renderer.domElement);
+
+    // lighting
+    const ambient = new THREE.AmbientLight(0x8899ff, 0.7);
+    scene.add(ambient);
+
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+    dirLight.position.set(4, 6, 3);
+    scene.add(dirLight);
+
+    // planet
+    const planetGeo = new THREE.SphereGeometry(1.4, 48, 48);
+    const planetMat = new THREE.MeshStandardMaterial({
+      color: 0x1d4ed8,
+      metalness: 0.4,
+      roughness: 0.35,
+      emissive: 0x0f172a,
+      emissiveIntensity: 0.8
+    });
+    const planet = new THREE.Mesh(planetGeo, planetMat);
+    scene.add(planet);
+
+    const glowGeo = new THREE.SphereGeometry(1.55, 32, 32);
+    const glowMat = new THREE.MeshBasicMaterial({
+      color: 0x38bdf8,
+      transparent: true,
+      opacity: 0.09
+    });
+    const glow = new THREE.Mesh(glowGeo, glowMat);
+    scene.add(glow);
+
+    const ringMat = new THREE.MeshBasicMaterial({
+      color: 0x38bdf8,
+      transparent: true,
+      opacity: 0.25,
+      side: THREE.DoubleSide
+    });
+    [2.4, 3.0].forEach((r) => {
+      const ringGeo = new THREE.RingGeometry(r - 0.01, r + 0.01, 80);
+      const ring = new THREE.Mesh(ringGeo, ringMat);
+      ring.rotation.x = Math.PI / 2;
+      scene.add(ring);
+    });
+
+    function createSatellite(color) {
+      const group = new THREE.Group();
+
+      const bodyGeo = new THREE.BoxGeometry(0.3, 0.3, 0.5);
+      const bodyMat = new THREE.MeshStandardMaterial({
+        color,
+        metalness: 0.8,
+        roughness: 0.25
+      });
+      const body = new THREE.Mesh(bodyGeo, bodyMat);
+      group.add(body);
+
+      const panelGeo = new THREE.BoxGeometry(0.05, 0.25, 0.9);
+      const panelMat = new THREE.MeshStandardMaterial({
+        color: 0x38bdf8,
+        metalness: 0.9,
+        roughness: 0.3
+      });
+
+      const leftPanel = new THREE.Mesh(panelGeo, panelMat);
+      leftPanel.position.set(-0.25, 0, 0);
+      group.add(leftPanel);
+
+      const rightPanel = leftPanel.clone();
+      rightPanel.position.x = 0.25;
+      group.add(rightPanel);
+
+      return group;
+    }
+
+    const satellites = [
+      { group: createSatellite(0xfbbf24), radius: 2.4, speed: 0.8, tilt: 0.25, phase: 0 },
+      { group: createSatellite(0x22c55e), radius: 3.0, speed: 0.5, tilt: -0.35, phase: Math.PI / 2 },
+      { group: createSatellite(0x6366f1), radius: 2.7, speed: 0.65, tilt: 0.6, phase: Math.PI }
+    ];
+
+    satellites.forEach((sat) => {
+      sat.group.rotation.z = sat.tilt;
+      scene.add(sat.group);
+    });
+
+    // simple drag controls (no OrbitControls)
+    let isDragging = false;
+let lastX = 0;
+let lastY = 0;
+
+// no clamping → full 360° rotation
+function onPointerDown(event) {
+  isDragging = true;
+  lastX = event.clientX;
+  lastY = event.clientY;
+}
+
+function onPointerMove(event) {
+  if (!isDragging) return;
+
+  const dx = event.clientX - lastX;
+  const dy = event.clientY - lastY;
+
+  lastX = event.clientX;
+  lastY = event.clientY;
+
+  // sensitivity
+  const rotateSpeed = 0.004;
+
+  // horizontal drag → full 360 orbit
+  azimuth -= dx * rotateSpeed;
+
+  // vertical drag → rotate camera vertically around target
+  elevation -= dy * rotateSpeed;
+
+  // wrap azimuth so it never overflows
+  if (azimuth > Math.PI) azimuth -= Math.PI * 2;
+  if (azimuth < -Math.PI) azimuth += Math.PI * 2;
+
+  // small clamp to avoid flipping camera upside down
+  const limit = Math.PI / 2 - 0.05;
+  if (elevation > limit) elevation = limit;
+  if (elevation < -limit) elevation = -limit;
+
+  updateCameraPosition();
+}
+
+function onPointerUp() {
+  isDragging = false;
+}
+
+
+    function onPointerUp() {
+      isDragging = false;
+    }
+
+    renderer.domElement.addEventListener("mousedown", onPointerDown);
+    window.addEventListener("mousemove", onPointerMove);
+    window.addEventListener("mouseup", onPointerUp);
+    renderer.domElement.addEventListener("mouseleave", onPointerUp);
+
+    // animation loop
+    let t = 0;
+    function animate() {
+      requestAnimationFrame(animate);
+
+      t += 0.01;
+      planet.rotation.y += 0.0025;
+      glow.rotation.y -= 0.001;
+
+      satellites.forEach((sat) => {
+        const angle = t * sat.speed + sat.phase;
+        const x = sat.radius * Math.cos(angle);
+        const z = sat.radius * Math.sin(angle);
+        sat.group.position.set(x, 0, z);
+        sat.group.lookAt(0, 0, 0);
+      });
+
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener("resize", () => {
+      const newWidth = container.clientWidth;
+      const newHeight = container.clientHeight || 240;
+      camera.aspect = newWidth / newHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(newWidth, newHeight);
+    });
+  })();
+</script>
+
+</body>
+</html>
