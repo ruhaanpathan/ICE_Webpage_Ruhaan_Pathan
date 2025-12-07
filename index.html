@@ -479,21 +479,21 @@
  <script>
   // ---- Video logic ----
   const videoLinks = {
-    1: "https://drive.google.com/file/d/1rCc8eXY3gcE7sYsAhQv1C8FSYU3Wg6wh/view?usp=sharing",
-    2: "https://drive.google.com/file/d/1bFf6ICGI6Mv5p2yU7CXto3RHFYvH_LGE/view?usp=drive_link",
-    3: "https://drive.google.com/file/d/1oyWDQJUpqWByrJtJ0CST93G8N_Ek_2Oq/view?usp=sharing",
-    4: "https://drive.google.com/file/d/1rCc8eXY3gcE7sYsAhQv1C8FSYU3Wg6wh/view?usp=sharing",
-    5: "https://drive.google.com/file/d/1bFf6ICGI6Mv5p2yU7CXto3RHFYvH_LGE/view?usp=drive_link",
-    6: "https://drive.google.com/file/d/1oyWDQJUpqWByrJtJ0CST93G8N_Ek_2Oq/view?usp=sharing"
+    1: "https://drive.google.com/file/d/1nQI2d7o3930Ht8idf6WXkOulCHhWiqz5/view",
+    2: "https://drive.google.com/file/d/1nQI2d7o3930Ht8idf6WXkOulCHhWiqz5/view",
+    3: "https://drive.google.com/file/d/1nQI2d7o3930Ht8idf6WXkOulCHhWiqz5/view",
+    4: "https://drive.google.com/file/d/1nQI2d7o3930Ht8idf6WXkOulCHhWiqz5/view",
+    5: "https://drive.google.com/file/d/1nQI2d7o3930Ht8idf6WXkOulCHhWiqz5/view",
+    6: "https://drive.google.com/file/d/1nQI2d7o3930Ht8idf6WXkOulCHhWiqz5/view"
   };
 
   const videoTopics = {
     1: "Introduction to Communication Channels",
-    2: "LAN, MAN & WAN",
-    3: "Performence Parameter - Bandwidth",
-    4: "Introduction to Communication Channels",
-    5: "LAN, MAN & WAN",
-    6: "Performence Parameter - Bandwidth"
+    2: "Types of Transmission Media",
+    3: "Microwave & Line-of-Sight Communication",
+    4: "Optical Fiber Communication",
+    5: "Twisted Pair vs Coaxial Cable",
+    6: "Cellular Networks & PCS"
   };
 
   const input = document.getElementById("videoNumber");
@@ -536,19 +536,25 @@
     videoTag.innerHTML = `
       Selected: <span>Video ${num}</span><br>
       Topic: <span>${videoTopics[num] || "Topic not set"}</span><br>
-      (opening in a new tab)
+      (opening after round-trip signal)
     `;
 
-    // restart animations
+    // restart 2D animations (dot + bits)
     signalDot.classList.remove("animate");
     bitStream.classList.remove("animate");
-    void signalDot.offsetWidth;
+    void signalDot.offsetWidth; // reflow
     signalDot.classList.add("animate");
     bitStream.classList.add("animate");
 
-    setTimeout(() => {
-      window.open(link, "_blank");
-    }, 1500);
+    const openVideo = () => window.open(link, "_blank");
+
+    // Ask 3D scene to run Earth→Satellite→Earth wave
+    if (window.triggerSatelliteSignal) {
+      window.triggerSatelliteSignal(openVideo);
+    } else {
+      // fallback if 3D failed
+      setTimeout(openVideo, 1600);
+    }
   }
 
   goBtn.addEventListener("click", startConnection);
@@ -565,7 +571,7 @@
     startConnection();
   });
 
-  // ---- 3D Satellite preview WITHOUT OrbitControls (custom drag) ----
+  // ---- 3D Satellite preview with Three.js: Earth + satellites + sine-wave signal ----
   (function initSatelliteScene() {
     const container = document.getElementById("satellitePreview");
     const width = container.clientWidth;
@@ -576,8 +582,8 @@
 
     const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 1000);
     const radius = 7;
-    let azimuth = 0.6;   // horizontal angle
-    let elevation = 0.4; // vertical angle
+    let azimuth = 0.6;
+    let elevation = 0.4;
 
     function updateCameraPosition() {
       const x = radius * Math.cos(azimuth) * Math.cos(elevation);
@@ -601,25 +607,18 @@
     dirLight.position.set(4, 6, 3);
     scene.add(dirLight);
 
-    // planet
     // realistic Earth
-const planetGeo = new THREE.SphereGeometry(1.4, 72, 72);
-
-// high-res Earth texture from threejs.org
-const earthTextureUrl = "https://threejs.org/examples/textures/land_ocean_ice_cloud_2048.jpg";
-
-const textureLoader = new THREE.TextureLoader();
-const earthTexture = textureLoader.load(earthTextureUrl);
-
-const planetMat = new THREE.MeshStandardMaterial({
-  map: earthTexture,
-  metalness: 0.0,
-  roughness: 1.0
-});
-
-const planet = new THREE.Mesh(planetGeo, planetMat);
-scene.add(planet);
-
+    const planetGeo = new THREE.SphereGeometry(1.4, 72, 72);
+    const earthTextureUrl = "https://threejs.org/examples/textures/land_ocean_ice_cloud_2048.jpg";
+    const textureLoader = new THREE.TextureLoader();
+    const earthTexture = textureLoader.load(earthTextureUrl);
+    const planetMat = new THREE.MeshStandardMaterial({
+      map: earthTexture,
+      metalness: 0.0,
+      roughness: 1.0
+    });
+    const planet = new THREE.Mesh(planetGeo, planetMat);
+    scene.add(planet);
 
     const glowGeo = new THREE.SphereGeometry(1.55, 32, 32);
     const glowMat = new THREE.MeshBasicMaterial({
@@ -630,6 +629,7 @@ scene.add(planet);
     const glow = new THREE.Mesh(glowGeo, glowMat);
     scene.add(glow);
 
+    // orbit rings
     const ringMat = new THREE.MeshBasicMaterial({
       color: 0x38bdf8,
       transparent: true,
@@ -684,88 +684,140 @@ scene.add(planet);
       scene.add(sat.group);
     });
 
-    // simple drag controls (no OrbitControls)
+    const clock = new THREE.Clock();
+
+    // ---- Sine Wave Signal Earth → Satellite → Earth ----
+    const curvePoints = 200;
+    const sineMaterial = new THREE.MeshBasicMaterial({
+      color: 0xfacc15,
+      transparent: true,
+      opacity: 0.9
+    });
+    let sineMesh = null;
+
+    let signalActive = false;
+    let signalTime = 0;
+    let signalDuration = 2.0; // seconds
+    let signalSat = null;
+    let signalCallback = null;
+
+    function generateSineWave(start, end, tNorm) {
+      const pts = [];
+      for (let i = 0; i < curvePoints; i++) {
+        const p = i / (curvePoints - 1);
+
+        // 0→1 (go) then 1→0 (return)
+        const travel = tNorm < 0.5 ? (tNorm / 0.5) : ((1 - tNorm) / 0.5);
+
+        const pos = start.clone().lerp(end, travel * p);
+
+        const amp = 0.05;
+        const freq = 30;
+        const offset = Math.sin(p * freq + tNorm * 8) * amp;
+
+        const dir = end.clone().sub(start).normalize();
+        let perp = new THREE.Vector3(0, 1, 0).cross(dir);
+        if (perp.lengthSq() < 0.0001) {
+          perp = new THREE.Vector3(1, 0, 0).cross(dir);
+        }
+        perp.normalize().multiplyScalar(offset);
+
+        pts.push(pos.add(perp));
+      }
+      return pts;
+    }
+
+    // called from startConnection()
+    window.triggerSatelliteSignal = function (cb) {
+      signalActive = true;
+      signalTime = 0;
+      signalSat = satellites[Math.floor(Math.random() * satellites.length)];
+      signalCallback = typeof cb === "function" ? cb : null;
+
+      if (sineMesh) {
+        scene.remove(sineMesh);
+        sineMesh.geometry.dispose();
+        sineMesh = null;
+      }
+    };
+
+    // ---- Mouse + touch drag controls (desktop + phone) ----
     let isDragging = false;
-let lastX = 0;
-let lastY = 0;
+    let lastX = 0;
+    let lastY = 0;
+    const rotateSpeed = 0.004;
 
-const rotateSpeed = 0.004;
+    function applyDrag(dx, dy) {
+      azimuth -= dx * rotateSpeed;
+      elevation -= dy * rotateSpeed;
 
-function applyDrag(dx, dy) {
-  // horizontal drag → full 360 orbit
-  azimuth -= dx * rotateSpeed;
+      if (azimuth > Math.PI) azimuth -= Math.PI * 2;
+      if (azimuth < -Math.PI) azimuth += Math.PI * 2;
 
-  // vertical drag → tilt up/down
-  elevation -= dy * rotateSpeed;
+      const limit = Math.PI / 2 - 0.05;
+      if (elevation > limit) elevation = limit;
+      if (elevation < -limit) elevation = -limit;
 
-  // wrap azimuth so it doesn’t explode
-  if (azimuth > Math.PI) azimuth -= Math.PI * 2;
-  if (azimuth < -Math.PI) azimuth += Math.PI * 2;
+      updateCameraPosition();
+    }
 
-  // clamp elevation to avoid flipping over the poles
-  const limit = Math.PI / 2 - 0.05;
-  if (elevation > limit) elevation = limit;
-  if (elevation < -limit) elevation = -limit;
+    function startDrag(clientX, clientY) {
+      isDragging = true;
+      lastX = clientX;
+      lastY = clientY;
+    }
 
-  updateCameraPosition();
-}
+    function moveDrag(clientX, clientY) {
+      if (!isDragging) return;
+      const dx = clientX - lastX;
+      const dy = clientY - lastY;
+      lastX = clientX;
+      lastY = clientY;
+      applyDrag(dx, dy);
+    }
 
-function startDrag(clientX, clientY) {
-  isDragging = true;
-  lastX = clientX;
-  lastY = clientY;
-}
+    function endDrag() {
+      isDragging = false;
+    }
 
-function moveDrag(clientX, clientY) {
-  if (!isDragging) return;
-  const dx = clientX - lastX;
-  const dy = clientY - lastY;
-  lastX = clientX;
-  lastY = clientY;
-  applyDrag(dx, dy);
-}
+    // mouse
+    renderer.domElement.addEventListener("mousedown", (e) => {
+      startDrag(e.clientX, e.clientY);
+    });
 
-function endDrag() {
-  isDragging = false;
-}
+    window.addEventListener("mousemove", (e) => {
+      moveDrag(e.clientX, e.clientY);
+    });
 
-/* ---- Mouse events ---- */
-renderer.domElement.addEventListener("mousedown", (e) => {
-  startDrag(e.clientX, e.clientY);
-});
+    window.addEventListener("mouseup", endDrag);
+    renderer.domElement.addEventListener("mouseleave", endDrag);
 
-window.addEventListener("mousemove", (e) => {
-  moveDrag(e.clientX, e.clientY);
-});
+    // touch
+    renderer.domElement.addEventListener("touchstart", (e) => {
+      if (e.touches.length === 0) return;
+      const tTouch = e.touches[0];
+      startDrag(tTouch.clientX, tTouch.clientY);
+      e.preventDefault();
+    }, { passive: false });
 
-window.addEventListener("mouseup", endDrag);
-renderer.domElement.addEventListener("mouseleave", endDrag);
+    window.addEventListener("touchmove", (e) => {
+      if (!isDragging || e.touches.length === 0) return;
+      const tTouch = e.touches[0];
+      moveDrag(tTouch.clientX, tTouch.clientY);
+      e.preventDefault();
+    }, { passive: false });
 
-/* ---- Touch events (for phone) ---- */
-renderer.domElement.addEventListener("touchstart", (e) => {
-  if (e.touches.length === 0) return;
-  const t = e.touches[0];
-  startDrag(t.clientX, t.clientY);
-  e.preventDefault(); // stop page scroll while dragging
-}, { passive: false });
+    window.addEventListener("touchend", endDrag);
+    window.addEventListener("touchcancel", endDrag);
 
-window.addEventListener("touchmove", (e) => {
-  if (!isDragging || e.touches.length === 0) return;
-  const t = e.touches[0];
-  moveDrag(t.clientX, t.clientY);
-  e.preventDefault();
-}, { passive: false });
-
-window.addEventListener("touchend", endDrag);
-window.addEventListener("touchcancel", endDrag);
-
-
-    // animation loop
+    // ---- animation loop ----
     let t = 0;
     function animate() {
       requestAnimationFrame(animate);
 
-      t += 0.01;
+      const dt = clock.getDelta();
+      t += dt * 1.5;
+
       planet.rotation.y += 0.0025;
       glow.rotation.y -= 0.001;
 
@@ -776,6 +828,40 @@ window.addEventListener("touchcancel", endDrag);
         sat.group.position.set(x, 0, z);
         sat.group.lookAt(0, 0, 0);
       });
+
+      // --- Animate sine-wave signal ---
+      if (signalActive && signalSat) {
+        signalTime += dt;
+        let tNorm = signalTime / signalDuration;
+
+        if (tNorm >= 1) {
+          signalActive = false;
+          if (sineMesh) {
+            scene.remove(sineMesh);
+            sineMesh.geometry.dispose();
+            sineMesh = null;
+          }
+          if (signalCallback) {
+            const cb = signalCallback;
+            signalCallback = null;
+            cb(); // open the video
+          }
+        } else {
+          const earthPos = new THREE.Vector3(0, 0, 0);
+          const satPos = signalSat.group.position.clone();
+
+          const pts = generateSineWave(earthPos, satPos, tNorm);
+          const curve = new THREE.CatmullRomCurve3(pts);
+          const tubeGeo = new THREE.TubeGeometry(curve, 200, 0.03, 8, false);
+
+          if (sineMesh) {
+            scene.remove(sineMesh);
+            sineMesh.geometry.dispose();
+          }
+          sineMesh = new THREE.Mesh(tubeGeo, sineMaterial);
+          scene.add(sineMesh);
+        }
+      }
 
       renderer.render(scene, camera);
     }
